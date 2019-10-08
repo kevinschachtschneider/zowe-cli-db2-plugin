@@ -9,20 +9,29 @@
 *                                                                                 *
 */
 
-export * from "./Constants";
-export * from "./api/ConnectionString";
-export * from "./api/doc/IDB2Column";
-export * from "./api/doc/IDB2Parameter";
-export * from "./api/doc/IDB2Response";
-export * from "./rest/session/doc/IDB2Session";
-export * from "./cli/DB2Session";
-export * from "./cli/DB2BaseHandler";
-export * from "./rest/session/Session";
-export * from "./api/DB2Constants";
-export * from "./api/SessionValidator";
-export * from "./api/ExecuteSQL";
-export * from "./api/ExplainStatement";
-export * from "./api/ExportTable";
-export * from "./api/ExportTableSQL";
-export * from "./api/CallSP";
-export * from "./api/DB2Error";
+import { ICommandDefinition } from "@zowe/imperative";
+import { StatementDefinition } from "./statement/Statement.definition";
+import { DB2Session } from "../../index";
+
+export const Explain: ICommandDefinition = {
+    name: "explain",
+    type: "group",
+    summary: "Explain a SQL statement",
+    description: "TODO. " +
+        "TODO.",
+    children: [
+        StatementDefinition,
+    ],
+    passOn: [
+        {
+            property: "options",
+            value: DB2Session.DB2_CONNECTION_OPTIONS,
+            merge: true,
+            ignoreNodes: [
+                {type: "group"}
+            ]
+        }
+    ]
+};
+
+module.exports = Explain;
