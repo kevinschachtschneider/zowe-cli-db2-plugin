@@ -12,6 +12,7 @@
 import { ConnectionString, DB2Constants, IDB2Parameter, IDB2Session,
     SessionValidator, DB2Error } from "../";
 import * as ibmdb from "ibm_db";
+import { DB2_PARM_OUTPUT, DB2_PARM_INPUT } from "./doc/IDB2Parameter";
 
 /**
  * Class to handle explain of a SQL statement
@@ -69,10 +70,21 @@ export class ExplainStatement {
         let result;
         try {
             this.mConnection = ibmdb.openSync(this.mConnectionString, options);
+            // Create or update existing explain tables
+            // TODO: if schema not set by user get from connection
+            const schema = this.getCurrentSQLID();
+            this.callAdminExplainMaint(schema);
+
+            // Get beginning timestamp for timeslice of Explain Tables
             const beginTimestamp = this.getCurrentTimestamp();
+
+            // Execute EXPLAIN statement for given explainable statement
             this.mConnection.querySync("EXPLAIN PLAN FOR " + sql, parameters);
+
+            // Get ending timestamp for timeslice of Explain Tables
             const endTimestamp = this.getCurrentTimestamp();
 
+            // Get rows from Explain Tables for timeslice
             result = this.mConnection.queryResultSync(this.explainStatements.PLAN_TABLE, [beginTimestamp, endTimestamp]);
             const planTableRows = result.fetchAllSync();
             if (result instanceof Error) {
@@ -95,10 +107,57 @@ export class ExplainStatement {
      * @memberof ExplainStatement
      */
     private getCurrentTimestamp(): string {
-        // TODO: check or comment or somthing for this.mConnection not open
         const result = this.mConnection.queryResultSync("SELECT CURRENT TIMESTAMP FROM SYSIBM.SYSDUMMY1");
         const timestamp = result.fetchAllSync(); // We have to fetchAll b/c of a misdefined type in @types package
         result.closeSync();
         return timestamp[0][1];
+    }
+
+    /**
+     * Get CURRENT SQLID TODO make this generic with TIMESTAMP
+     * @returns {string}
+     * @static
+     * @memberof ExplainStatement
+     */
+    private getCurrentSQLID(): string {
+        const result = this.mConnection.queryResultSync("SELECT CURRENT SQLID FROM SYSIBM.SYSDUMMY1");
+        const sqlid = result.fetchAllSync(); // We have to fetchAll b/c of a misdefined type in @types package
+        result.closeSync();
+        return sqlid[0][1];
+    }
+
+    /**
+     * Create or upgrade explain tables
+     *
+     */
+    private callAdminExplainMaint(schema: string) {
+        const query: string = "CALL SYSPROC.ADMIN_EXPLAIN_MAINT(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const parameters: IDB2Parameter[] = [
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: mode
+            {ParamType: DB2_PARM_INPUT, Data: "STANDARDIZE_AND_CREATE"}, // option: action
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: manage-alias
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: table-set
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: authid
+            {ParamType: DB2_PARM_INPUT, Data: schema}, // option: schema-name
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_OUTPUT, Data: "RUN"},
+            {ParamType: DB2_PARM_OUTPUT, Data: "RUN"},
+        ];
+        const preparedStatement = this.mConnection.prepareSync(query);
+        const result = preparedStatement.executeSync(parameters);
+        console.log(result); // tslint:disable-line
+
     }
 }
