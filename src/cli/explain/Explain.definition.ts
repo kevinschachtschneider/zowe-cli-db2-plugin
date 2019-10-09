@@ -17,8 +17,7 @@ export const Explain: ICommandDefinition = {
     name: "explain",
     type: "group",
     summary: "Explain a SQL statement",
-    description: "TODO. " +
-        "TODO.",
+    description: "Issue an EXPLAIN command for an explainable statement.",
     children: [
         StatementDefinition,
     ],

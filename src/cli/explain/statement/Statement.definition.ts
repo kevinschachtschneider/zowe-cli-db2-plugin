@@ -17,7 +17,9 @@ export const StatementDefinition: ICommandDefinition = {
     type: "command",
     summary: "Issue an EXPLAIN for an explainable statement",
     description: "Issue an EXPLAIN for an explainable statement." +
-    "TODO details about qulifier, table options, etc.",
+    "EXPLAIN tables created with the current SQLID of the connection. All existing EXPLAIN"+
+    "tables standardized to the format of the current Db2 version and missing EXPLAIN tables created."+
+    "By default, creation of EXPLAIN tables is rolled back. To commit changes use commit option (-c).",
     handler: __dirname + "/Statement.handler",
     profile: {
         optional: ["db2"]
