@@ -72,7 +72,7 @@ export function visualize(stuff: any) {
         }
         const util = require("util");
         console.log(util.inspect(tree, {showHidden: false, depth: null})); // tslint:disable-line
-        textTree(tree);
+        generateTreeImage(textTree(tree));
     }
     catch (err) {
         console.log(err); // tslint:disable-line
@@ -81,17 +81,35 @@ export function visualize(stuff: any) {
 }
 
 /* tslint:disable */
-function textTree(tree: any): void {
+function textTree(tree: any): string {
+    let output = "";
     function walk(node: any, dent: number) {
         if (null === node)
             return;
-        console.log(new Array(dent + 1).join('*') + ' ' + dataToText(node.data));
+        output += new Array(dent + 1).join('*') + ' ' + dataToText(node.data) + '\n';
         walk(node.left, dent+1);
         walk(node.right, dent+1);
     }
 
     let dent = 1;
     walk(tree, dent);
+    console.log(output);
+    return output;
+}
+
+function generateTreeImage(filestr: string): void {
+    var plantuml = require("node-plantuml");
+    var fs = require("fs");
+
+    filestr = "@startmindmap \n" + filestr + "@endmindmap \n";
+    fs.writeFile("explain-in.txt", filestr, (err: any)=>{
+        if (err)
+            console.log(err);
+        console.log("file created");
+    })
+
+    var gen = plantuml.generate("explain-in.txt");
+    gen.out.pipe(fs.createWriteStream("explain-out.png"));
 }
 
 function dataToText(data: any): string {
