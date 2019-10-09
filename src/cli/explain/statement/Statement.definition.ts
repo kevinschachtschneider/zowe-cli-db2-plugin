@@ -13,10 +13,11 @@ import { ICommandDefinition } from "@zowe/imperative";
 
 export const StatementDefinition: ICommandDefinition = {
     name: "statement",
+    aliases: ["stmt"],
     type: "command",
-    summary: "EXPLAIN an SQL statement",
-    description: "TODO " +
-    "TODO.",
+    summary: "Issue an EXPLAIN for an explainable statement",
+    description: "Issue an EXPLAIN for an explainable statement." +
+    "TODO details about qulifier, table options, etc.",
     handler: __dirname + "/Statement.handler",
     profile: {
         optional: ["db2"]
@@ -26,30 +27,16 @@ export const StatementDefinition: ICommandDefinition = {
             name: "query",
             aliases: ["q"],
             type: "string",
-            description: "The SQL statement verbatim to execute",
-            conflictsWith: ["file"],
-        },
-        {
-            name: "file",
-            aliases: ["f"],
-            type: "string",
-            description: "A local file containing the SQL statements to execute",
-            conflictsWith: ["query"]
+            description: "The explainable statement",
         }
+        // TODO: rollback option
+        // TODO: qualifier option
     ],
     examples: [
         {
-            description: "Execute a dummy SQL query",
-            options: "--query\"SELECT FROM SYSIBM.SYSDUMMY1\"",
-        },
-        {
-            description: "Retrieve the employees table and total number of rows",
-            options: "-q \"SELECT * FROM SAMPLE.EMP; SELECT COUNT(*) AS TOTAL FROM SAMPLE.EMP\"",
-        },
-        {
-            description: "Execute a file with SQL statements",
-            options: "--file backup_sample_database.sql"
+            description: "Get access path information for query",
+            options: "-q \"SELECT * FROM SAMPLE.EMP\"",
         }
     ],
-    mustSpecifyOne: ["query", "file"],
+    mustSpecifyOne: ["query"],
 };
