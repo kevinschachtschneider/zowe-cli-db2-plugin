@@ -28,8 +28,13 @@ export const StatementDefinition: ICommandDefinition = {
             aliases: ["q"],
             type: "string",
             description: "The explainable statement",
+        },
+        {
+            name: "commit",
+            aliases: ["c"],
+            type: "boolean",
+            description: "Commit rows and changes to explain tables",
         }
-        // TODO: rollback option
         // TODO: qualifier option
     ],
     examples: [

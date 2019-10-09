@@ -63,26 +63,31 @@ export class ExplainStatement {
      * @static
      * @memberof ExplainStatement
      */
-    public explain(sql: string, parameters?: IDB2Parameter[]): any {
+    public explain(sql: string, commit: boolean): any {
         const options = {
             fetchMode: DB2Constants.FETCH_MODE_OBJECT,
         };
         let result;
         try {
             this.mConnection = ibmdb.openSync(this.mConnectionString, options);
+            this.mConnection.beginTransactionSync();
+
             // Create or update existing explain tables
             // TODO: if schema not set by user get from connection
             const schema = this.getCurrentSQLID();
-            this.callAdminExplainMaint(schema);
+            // this.callAdminExplainMaint(schema);
 
             // Get beginning timestamp for timeslice of Explain Tables
             const beginTimestamp = this.getCurrentTimestamp();
+            console.log(beginTimestamp); // tslint:disable-line
 
             // Execute EXPLAIN statement for given explainable statement
-            this.mConnection.querySync("EXPLAIN PLAN FOR " + sql, parameters);
+            this.mConnection.querySync("EXPLAIN PLAN FOR " + sql);
+            // TODO: There is no error handing here... just silent failure
 
             // Get ending timestamp for timeslice of Explain Tables
             const endTimestamp = this.getCurrentTimestamp();
+            console.log(endTimestamp); // tslint:disable-line
 
             // Get rows from Explain Tables for timeslice
             result = this.mConnection.queryResultSync(this.explainStatements.PLAN_TABLE, [beginTimestamp, endTimestamp]);
@@ -92,6 +97,11 @@ export class ExplainStatement {
             }
             result.closeSync();
 
+            if (commit) {
+                this.mConnection.commitTransactionSync();
+            } else {
+                this.mConnection.rollbackTransactionSync();
+            }
             this.mConnection.closeSync();
             return { PLAN_TABLE : planTableRows };
         }

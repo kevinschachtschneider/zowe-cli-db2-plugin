@@ -23,11 +23,12 @@ export default class StatementHandler extends DB2BaseHandler {
     public async processWithDB2Session(params: IHandlerParameters, session: AbstractSession): Promise<void> {
         const DB2session = session.ISession as IDB2Session;
 
-        const query = params.arguments.query;
+        const query: string = params.arguments.query;
+        const commit: boolean = params.arguments.commit;
 
         const explainer = new ExplainStatement(DB2session);
 
-        const response = explainer.explain(query);
+        const response = explainer.explain(query, commit);
 
         // // Return as an object when using --response-format-json
         // params.response.data.setObj(responses);
