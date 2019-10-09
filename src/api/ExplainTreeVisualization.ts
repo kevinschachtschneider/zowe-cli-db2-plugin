@@ -72,12 +72,40 @@ export function visualize(stuff: any) {
         }
         const util = require("util");
         console.log(util.inspect(tree, {showHidden: false, depth: null})); // tslint:disable-line
+        textTree(tree);
     }
     catch (err) {
         console.log(err); // tslint:disable-line
     }
 
 }
+
+/* tslint:disable */
+function textTree(tree: any): void {
+    function walk(node: any, dent: number) {
+        if (null === node)
+            return;
+        console.log(new Array(dent + 1).join('*') + ' ' + dataToText(node.data));
+        walk(node.left, dent+1);
+        walk(node.right, dent+1);
+    }
+
+    let dent = 1;
+    walk(tree, dent);
+}
+
+function dataToText(data: any): string {
+    if (typeof data === "string")
+        return data;
+    switch (data.METHOD) {
+        case 1: return "Nested loop join";
+        case 2: return "Merge scan join";
+        case 3: return "Sorting";
+        case 0: return data.TNAME;
+    }
+    return "Unknown";
+}
+/* tslint:enable */
 
 function createNextTreeNode(currentNode: TreeNode, qBlockArray: any[][], numberOfChildren: number) {
     while (qBlockArray.length > 0 && qBlockArray[0].length === 0) {

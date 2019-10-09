@@ -13,6 +13,7 @@ import { ConnectionString, DB2Constants, IDB2Parameter, IDB2Session,
     SessionValidator, DB2Error } from "../";
 import * as ibmdb from "ibm_db";
 import { DB2_PARM_OUTPUT, DB2_PARM_INPUT } from "./doc/IDB2Parameter";
+import { visualize } from "./ExplainTreeVisualization";
 
 /**
  * Class to handle explain of a SQL statement
@@ -105,6 +106,7 @@ export class ExplainStatement {
                 this.mConnection.rollbackTransactionSync();
             }
             this.mConnection.closeSync();
+            visualize({ PLAN_TABLE : planTableRows });
             return { PLAN_TABLE : planTableRows };
         }
         catch (err) {
