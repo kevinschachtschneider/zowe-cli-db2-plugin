@@ -79,15 +79,15 @@ export class ExplainStatement {
 
             // Get beginning timestamp for timeslice of Explain Tables
             const beginTimestamp = this.getCurrentTimestamp();
-            console.log(beginTimestamp); // tslint:disable-line
 
             // Execute EXPLAIN statement for given explainable statement
-            this.mConnection.querySync("EXPLAIN PLAN FOR " + sql);
-            // TODO: There is no error handing here... just silent failure
+            result = this.mConnection.querySync("EXPLAIN PLAN FOR " + sql);
+            if (result instanceof Error) {
+                throw result;
+            }
 
             // Get ending timestamp for timeslice of Explain Tables
             const endTimestamp = this.getCurrentTimestamp();
-            console.log(endTimestamp); // tslint:disable-line
 
             // Get rows from Explain Tables for timeslice
             result = this.mConnection.queryResultSync(this.explainStatements.PLAN_TABLE, [beginTimestamp, endTimestamp]);
