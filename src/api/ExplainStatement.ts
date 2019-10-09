@@ -153,7 +153,7 @@ export class ExplainStatement {
             { ParamType: DB2_PARM_INPUT, Data: schema }, // option: schema-name
             { ParamType: DB2_PARM_INPUT, Data: "DSNDB04" }, // option: database-name
             { ParamType: DB2_PARM_OUTPUT, Data: 0 }, // option: return-code
-            { ParamType: DB2_PARM_OUTPUT, Data: "" }, //option: message
+            { ParamType: DB2_PARM_OUTPUT, Data: "" }, // option: message
         ];
         const preparedStatement = this.mConnection.prepareSync(query);
         const result = preparedStatement.executeSync(parameters);
