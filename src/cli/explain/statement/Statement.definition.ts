@@ -34,8 +34,13 @@ export const StatementDefinition: ICommandDefinition = {
             aliases: ["c"],
             type: "boolean",
             description: "Commit rows and changes to explain tables",
+        },
+        {
+            name: "sqlid",
+            aliases: ["id"],
+            type: "string",
+            description: "SQLID to use (creator of explain tables)",
         }
-        // TODO: qualifier option
     ],
     examples: [
         {

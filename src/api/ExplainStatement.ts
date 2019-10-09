@@ -63,7 +63,7 @@ export class ExplainStatement {
      * @static
      * @memberof ExplainStatement
      */
-    public explain(sql: string, commit: boolean): any {
+    public explain(sql: string, commit: boolean, sqlid?: string): any {
         const options = {
             fetchMode: DB2Constants.FETCH_MODE_OBJECT,
         };
@@ -73,7 +73,9 @@ export class ExplainStatement {
             this.mConnection.beginTransactionSync();
 
             // Create or update existing explain tables
-            // TODO: if schema not set by user get from connection
+            if (typeof sqlid !== "undefined") {
+                this.setCurrentSQLID(sqlid);
+            }
             const schema = this.getCurrentSQLID();
             this.callAdminExplainMaint(schema);
 
@@ -134,6 +136,13 @@ export class ExplainStatement {
         const sqlid = result.fetchAllSync(); // We have to fetchAll b/c of a misdefined type in @types package
         result.closeSync();
         return sqlid[0][1];
+    }
+
+    private setCurrentSQLID(id: string): void {
+        const result = this.mConnection.querySync("SET CURRENT SQLID = ?", [id]);
+        if (result instanceof Error) {
+            throw result;
+        }
     }
 
     /**
