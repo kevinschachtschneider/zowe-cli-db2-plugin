@@ -75,7 +75,7 @@ export class ExplainStatement {
             // Create or update existing explain tables
             // TODO: if schema not set by user get from connection
             const schema = this.getCurrentSQLID();
-            // this.callAdminExplainMaint(schema);
+            this.callAdminExplainMaint(schema);
 
             // Get beginning timestamp for timeslice of Explain Tables
             const beginTimestamp = this.getCurrentTimestamp();
@@ -138,36 +138,27 @@ export class ExplainStatement {
 
     /**
      * Create or upgrade explain tables
-     *
+     * @returns {string}
+     * @static
+     * @memberof ExplainStatement
      */
-    private callAdminExplainMaint(schema: string) {
-        const query: string = "CALL SYSPROC.ADMIN_EXPLAIN_MAINT(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private callAdminExplainMaint(schema: string): void {
+        const query: string = "CALL SYSPROC.ADMIN_EXPLAIN_MAINT(?, ?, ?, ?, ?, ?, NULL, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?)";
         const parameters: IDB2Parameter[] = [
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: mode
-            {ParamType: DB2_PARM_INPUT, Data: "STANDARDIZE_AND_CREATE"}, // option: action
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: manage-alias
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: table-set
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: authid
-            {ParamType: DB2_PARM_INPUT, Data: schema}, // option: schema-name
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_OUTPUT, Data: "RUN"},
-            {ParamType: DB2_PARM_OUTPUT, Data: "RUN"},
+            { ParamType: DB2_PARM_INPUT, Data: "RUN" }, // option: mode
+            { ParamType: DB2_PARM_INPUT, Data: "STANDARDIZE_AND_CREATE" }, // option: action
+            { ParamType: DB2_PARM_INPUT, Data: "NO" }, // option: manage-alias
+            { ParamType: DB2_PARM_INPUT, Data: "ALL" }, // option: table-set
+            { ParamType: DB2_PARM_INPUT, Data: schema }, // option: authid
+            { ParamType: DB2_PARM_INPUT, Data: schema }, // option: schema-name
+            { ParamType: DB2_PARM_INPUT, Data: "DSNDB04" }, // option: database-name
+            { ParamType: DB2_PARM_OUTPUT, Data: 0 }, // option: return-code
+            { ParamType: DB2_PARM_OUTPUT, Data: "" }, //option: message
         ];
         const preparedStatement = this.mConnection.prepareSync(query);
         const result = preparedStatement.executeSync(parameters);
-        console.log(result); // tslint:disable-line
-
+        if (result instanceof Error) {
+            throw result;
+        }
     }
 }
