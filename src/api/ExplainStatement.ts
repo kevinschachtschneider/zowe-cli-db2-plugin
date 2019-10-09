@@ -63,13 +63,15 @@ export class ExplainStatement {
      * @static
      * @memberof ExplainStatement
      */
-    public explain(sql: string, parameters?: IDB2Parameter[]): any {
+    public explain(sql: string, commit: boolean): any {
         const options = {
             fetchMode: DB2Constants.FETCH_MODE_OBJECT,
         };
         let result;
         try {
             this.mConnection = ibmdb.openSync(this.mConnectionString, options);
+            this.mConnection.beginTransactionSync();
+
             // Create or update existing explain tables
             // TODO: if schema not set by user get from connection
             const schema = this.getCurrentSQLID();
@@ -79,7 +81,10 @@ export class ExplainStatement {
             const beginTimestamp = this.getCurrentTimestamp();
 
             // Execute EXPLAIN statement for given explainable statement
-            this.mConnection.querySync("EXPLAIN PLAN FOR " + sql, parameters);
+            result = this.mConnection.querySync("EXPLAIN PLAN FOR " + sql);
+            if (result instanceof Error) {
+                throw result;
+            }
 
             // Get ending timestamp for timeslice of Explain Tables
             const endTimestamp = this.getCurrentTimestamp();
@@ -92,6 +97,11 @@ export class ExplainStatement {
             }
             result.closeSync();
 
+            if (commit) {
+                this.mConnection.commitTransactionSync();
+            } else {
+                this.mConnection.rollbackTransactionSync();
+            }
             this.mConnection.closeSync();
             return { PLAN_TABLE : planTableRows };
         }
@@ -128,36 +138,27 @@ export class ExplainStatement {
 
     /**
      * Create or upgrade explain tables
-     *
+     * @returns {string}
+     * @static
+     * @memberof ExplainStatement
      */
-    private callAdminExplainMaint(schema: string) {
-        const query: string = "CALL SYSPROC.ADMIN_EXPLAIN_MAINT(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private callAdminExplainMaint(schema: string): void {
+        const query: string = "CALL SYSPROC.ADMIN_EXPLAIN_MAINT(?, ?, ?, ?, ?, ?, NULL, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?)";
         const parameters: IDB2Parameter[] = [
-            {ParamType: DB2_PARM_INPUT, Data: "RUN"}, // option: mode. Alters and creates Explain tables.
-            {ParamType: DB2_PARM_INPUT, Data: "STANDARDIZE_AND_CREATE"}, // option: action. Updates all EXPL tbls to the current DB2 format.
-            {ParamType: DB2_PARM_INPUT, Data: "NO"}, // option: manage-alias. Specifies whether to create aliases for EXPLAIN tables.
-            {ParamType: DB2_PARM_INPUT, Data: "DIAGNOSTICS"}, // option: table-set. Specifies the list of tables to be created.
-            {ParamType: DB2_PARM_INPUT, Data: schema}, // option: authid. The CURRENT SQLID setting.
-            {ParamType: DB2_PARM_INPUT, Data: schema}, // option: schema-name. The schema name that qualifies the EXPLAIN tables.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option: schema-alias. Required only if manage-alias is set to YES.
-            {ParamType: DB2_PARM_INPUT, Data: "DSNDB04"},// option: database-name. Database that contains new Explain tables.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:stogroup-database. Stogroup to store database.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option: stogroup-index. Contains stogroup index.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:4k-bufferpool.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:8k-bufferpool.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:16k-bufferpool.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:32k-bufferpool.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:index-bufferpool.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:bp-4kb-lob.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:bp-8kb-lob.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:bp-16kb-lob.
-            {ParamType: DB2_PARM_INPUT, Data: "NULL"},// option:bp-32kb-lob.
-            {ParamType: DB2_PARM_OUTPUT, Data: "0"},// option:return-code. Contains the return code from the stored procedure.
-            {ParamType: DB2_PARM_OUTPUT, Data: "Some text you see here..."},// option:message
+            { ParamType: DB2_PARM_INPUT, Data: "RUN" }, // option: mode
+            { ParamType: DB2_PARM_INPUT, Data: "STANDARDIZE_AND_CREATE" }, // option: action
+            { ParamType: DB2_PARM_INPUT, Data: "NO" }, // option: manage-alias
+            { ParamType: DB2_PARM_INPUT, Data: "ALL" }, // option: table-set
+            { ParamType: DB2_PARM_INPUT, Data: schema }, // option: authid
+            { ParamType: DB2_PARM_INPUT, Data: schema }, // option: schema-name
+            { ParamType: DB2_PARM_INPUT, Data: "DSNDB04" }, // option: database-name
+            { ParamType: DB2_PARM_OUTPUT, Data: 0 }, // option: return-code
+            { ParamType: DB2_PARM_OUTPUT, Data: "" }, // option: message
         ];
         const preparedStatement = this.mConnection.prepareSync(query);
         const result = preparedStatement.executeSync(parameters);
-        console.log(result); // tslint:disable-line
-
+        if (result instanceof Error) {
+            throw result;
+        }
     }
 }
