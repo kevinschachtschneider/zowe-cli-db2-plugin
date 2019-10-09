@@ -25,10 +25,11 @@ export default class StatementHandler extends DB2BaseHandler {
 
         const query: string = params.arguments.query;
         const commit: boolean = params.arguments.commit;
+        const sqlid: string = params.arguments.sqlid;
 
         const explainer = new ExplainStatement(DB2session);
 
-        const response = explainer.explain(query, commit);
+        const response = explainer.explain(query, commit, sqlid);
 
         // // Return as an object when using --response-format-json
         // params.response.data.setObj(responses);
